@@ -20,7 +20,7 @@ function About() {
           <div className="profile-card">
             <div className="image-placeholder">
               <img
-                src="/images/profile.jpg"
+                src={`${import.meta.env.BASE_URL}images/profile.jpg`}
                 alt="장태웅 프로필"
                 onError={(e) => {
                   e.currentTarget.style.display = "none";

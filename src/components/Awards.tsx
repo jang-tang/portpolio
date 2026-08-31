@@ -66,7 +66,7 @@ function Awards() {
 
             <div className="image-fallback">
               <span>ROBOFEST IMAGE</span>
-              <small>/public/images/robofest.jpg</small>
+              <small>public/images/robofest.jpg</small>
             </div>
           </div>
 
