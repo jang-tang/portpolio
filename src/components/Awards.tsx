@@ -57,7 +57,7 @@ function Awards() {
         <div className="future-achievement">
           <div className="future-image">
             <img
-              src="/images/robofest.jpg"
+              src={`${import.meta.env.BASE_URL}images/robofest.jpg`}
               alt="2027 RoboFest"
               onError={(e) => {
                 e.currentTarget.style.display = "none";
