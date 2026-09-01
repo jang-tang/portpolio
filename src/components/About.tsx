@@ -45,7 +45,7 @@ function About() {
 
           <div className="about-content">
             <p className="large-text">
-             저는 <strong>문제를 발견하고, 기술을 통해 해결하여<br/>​</strong>사회적 가치를 만들어내는 것에 관심이 많습니다.
+             저는 <strong>문제를 발견하고, 기술을 통해 해결하여​</strong> 사회적 가치를 만들어내는 것에 관심이 많습니다.
             </p>
 
             <p>
