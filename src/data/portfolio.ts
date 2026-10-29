@@ -47,6 +47,12 @@ export const awards = [
     organization: "창업진흥원장",
     image: `${import.meta.env.BASE_URL}images/award-08.jpg`,
   },
+  {
+    year: "2026",
+    title: "대한민국 청소년 창업경진대회 우수상",
+    organization: "한국청년기업가정신재단",
+    image: `${import.meta.env.BASE_URL}images/award-09.jpg`,
+  },
 ];
 
 export const projects = [
