@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   X,
   ChevronLeft,
@@ -7,14 +7,12 @@ import {
   Pause,
   FileX2,
   ExternalLink,
-  Download,
-  Loader2,
 } from "lucide-react";
-import * as pdfjsLib from "pdfjs-dist";
-import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
-import type { PDFDocumentProxy } from "pdfjs-dist";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
+export interface ProjectSlides {
+  folder: string;
+  pages: number;
+}
 
 export interface ProjectItem {
   number: string;
@@ -22,7 +20,7 @@ export interface ProjectItem {
   role: string;
   description: string;
   tags: string[];
-  pdf: string | null;
+  slides: ProjectSlides | null;
 }
 
 interface ProjectModalProps {
@@ -32,42 +30,23 @@ interface ProjectModalProps {
 
 const AUTOPLAY_MS = 4000;
 
-function PdfPage({
-  doc,
-  pageNumber,
+function slideUrl(slides: ProjectSlides, index: number) {
+  return `${import.meta.env.BASE_URL}slides/${slides.folder}/${String(index + 1).padStart(2, "0")}.jpg`;
+}
+
+function SlideImage({
+  src,
+  alt,
   active,
 }: {
-  doc: PDFDocumentProxy;
-  pageNumber: number;
+  src: string;
+  alt: string;
   active: boolean;
 }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  // 현재 페이지 근처에 한 번이라도 온 슬라이드만 이미지를 불러오고, 이후엔 유지
+  const [visible, setVisible] = useState(active);
   const [error, setError] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    const render = async () => {
-      if (!active) return;
-      try {
-        const page = await doc.getPage(pageNumber);
-        if (cancelled) return;
-        const viewport = page.getViewport({ scale: 2 });
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-        await page.render({ canvas, viewport }).promise;
-        page.cleanup();
-      } catch {
-        if (!cancelled) setError(true);
-      }
-    };
-    // active가 아니어도 레이아웃 유지를 위해 캔버스는 렌더, 실제 렌더는 active 근처에서만
-    render();
-    return () => {
-      cancelled = true;
-    };
-  }, [doc, pageNumber, active]);
+  if (active && !visible) setVisible(true);
 
   if (error) {
     return (
@@ -77,25 +56,27 @@ function PdfPage({
     );
   }
 
-  return <canvas ref={canvasRef} className="pdf-canvas" />;
+  if (!visible) return null;
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className="pdf-canvas"
+      decoding="async"
+      onError={() => setError(true)}
+    />
+  );
 }
 
 function ProjectModal({ project, onClose }: ProjectModalProps) {
-  const hasPdf = Boolean(project.pdf);
-  const pdfUrl = hasPdf
-    ? `${import.meta.env.BASE_URL}my_projects/${encodeURIComponent(project.pdf as string)}`
-    : null;
+  const slides = project.slides;
+  const numPages = slides?.pages ?? 0;
 
-  const [doc, setDoc] = useState<PDFDocumentProxy | null>(null);
-  const [numPages, setNumPages] = useState(0);
   const [current, setCurrent] = useState(0);
-  const [loading, setLoading] = useState(hasPdf);
-  const [progress, setProgress] = useState(0);
-  const [loadError, setLoadError] = useState(false);
   const [playing, setPlaying] = useState(true);
   const [pausedByHover, setPausedByHover] = useState(false);
   const [touchX, setTouchX] = useState<number | null>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
 
   const goTo = useCallback(
     (index: number) => {
@@ -109,71 +90,14 @@ function ProjectModal({ project, onClose }: ProjectModalProps) {
   const next = useCallback(() => goTo(current + 1), [current, goTo]);
   const prev = useCallback(() => goTo(current - 1), [current, goTo]);
 
-  // PDF 로드 (마운트 시 1회 — 프로젝트가 바뀌면 key로 리마운트됨)
-  useEffect(() => {
-    if (!pdfUrl) return;
-    let cancelled = false;
-    let loadingTask: ReturnType<typeof pdfjsLib.getDocument> | null = null;
-
-    try {
-      loadingTask = pdfjsLib.getDocument({
-        url: pdfUrl,
-        // 외부 CDN 대신 사이트와 함께 배포되는 로컬 CMap 사용 (오프라인/차단 환경에서도 한글 렌더 안정)
-        cMapUrl: `${import.meta.env.BASE_URL}cmaps/`,
-        cMapPacked: true,
-      });
-      loadingTask.onProgress = (data: { loaded: number; total: number }) => {
-        if (!cancelled && data.total > 0) {
-          setProgress(Math.round((data.loaded / data.total) * 100));
-        }
-      };
-      loadingTask.promise.then(
-        (loadedDoc) => {
-          if (cancelled) {
-            loadedDoc.cleanup().catch(() => {});
-            return;
-          }
-          setDoc(loadedDoc);
-          docRef.current = loadedDoc;
-          setNumPages(loadedDoc.numPages);
-          setLoading(false);
-        },
-        () => {
-          if (!cancelled) {
-            setLoading(false);
-            setLoadError(true);
-          }
-        }
-      );
-    } catch {
-      // getDocument() 동기 예외 — 마운트 시 1회성 폴백이므로 허용
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setLoadError(true);
-      setLoading(false);
-    }
-
-    return () => {
-      cancelled = true;
-      loadingTask?.destroy().catch(() => {});
-    };
-  }, [pdfUrl]);
-
-  // doc 정리
-  const docRef = useRef<PDFDocumentProxy | null>(null);
-  useEffect(() => {
-    return () => {
-      docRef.current?.cleanup().catch(() => {});
-    };
-  }, []);
-
   // 자동 슬라이드
   useEffect(() => {
-    if (!playing || pausedByHover || loading || loadError || numPages <= 1) return;
+    if (!playing || pausedByHover || numPages <= 1) return;
     const id = window.setInterval(() => {
       setCurrent((c) => (c + 1) % numPages);
     }, AUTOPLAY_MS);
     return () => window.clearInterval(id);
-  }, [playing, pausedByHover, loading, loadError, numPages]);
+  }, [playing, pausedByHover, numPages]);
 
   // ESC / 방향키 / 스크롤 잠금
   useEffect(() => {
@@ -242,7 +166,7 @@ function ProjectModal({ project, onClose }: ProjectModalProps) {
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          {!hasPdf ? (
+          {!slides ? (
             <div className="pm-empty">
               <div className="pm-empty-icon">
                 <FileX2 size={40} strokeWidth={1.5} />
@@ -254,54 +178,18 @@ function ProjectModal({ project, onClose }: ProjectModalProps) {
                 아래 간략한 설명을 참고해 주세요.
               </p>
             </div>
-          ) : loading ? (
-            <div className="pm-loading">
-              <Loader2 size={36} className="pm-spinner" />
-              <p>발표 자료 불러오는 중{progress > 0 ? ` · ${progress}%` : "…"}</p>
-              <div className="pm-loading-bar">
-                <div
-                  className="pm-loading-fill"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-              <span className="pm-loading-name">{project.pdf}</span>
-            </div>
-          ) : loadError || !doc ? (
-            <div className="pm-empty">
-              <div className="pm-empty-icon">
-                <FileX2 size={40} strokeWidth={1.5} />
-              </div>
-              <p className="pm-empty-title">PDF를 불러오지 못했어요</p>
-              <p className="pm-empty-desc">
-                파일이 크거나 네트워크가 느릴 수 있어요.
-                <br />
-                새 창에서 직접 열어보세요.
-              </p>
-              {pdfUrl && (
-                <a
-                  className="button button-secondary pm-retry"
-                  href={pdfUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <ExternalLink size={15} />
-                  새 창에서 보기
-                </a>
-              )}
-            </div>
           ) : (
             <>
               <div className="pm-stage">
                 <div
-                  ref={trackRef}
                   className="pm-track"
                   style={{ transform: `translateX(-${current * 100}%)` }}
                 >
                   {Array.from({ length: numPages }, (_, i) => (
                     <div className="pm-slide" key={i}>
-                      <PdfPage
-                        doc={doc}
-                        pageNumber={i + 1}
+                      <SlideImage
+                        src={slideUrl(slides, i)}
+                        alt={`${project.name} ${i + 1}페이지`}
                         active={Math.abs(i - current) <= 1}
                       />
                     </div>
@@ -396,24 +284,16 @@ function ProjectModal({ project, onClose }: ProjectModalProps) {
                 ))}
               </div>
             </div>
-            {pdfUrl && (
+            {slides && (
               <div className="pm-actions">
                 <a
                   className="button button-primary"
-                  href={pdfUrl}
+                  href={slideUrl(slides, current)}
                   target="_blank"
                   rel="noreferrer"
                 >
                   <ExternalLink size={15} />
-                  전체화면으로 보기
-                </a>
-                <a
-                  className="button button-secondary"
-                  href={pdfUrl}
-                  download={project.pdf ?? undefined}
-                >
-                  <Download size={15} />
-                  PDF 다운로드
+                  현재 페이지 크게 보기
                 </a>
               </div>
             )}

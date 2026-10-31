@@ -63,7 +63,7 @@ export const projects = [
     description:
       "거주 문제를 지닌 청년과 정서적 고립을 느끼는 노인층을 연결해주는 주거 매칭 플랫폼.",
     tags: ["System Design", "Platform", "Social Impact"],
-    pdf: "together.pdf",
+    slides: { folder: "together", pages: 26 },
   },
   {
     number: "02",
@@ -72,7 +72,7 @@ export const projects = [
     description:
       "남아서 할인하는 음식과 남는 음식들을 필요한 가성비 추구 사용자들에게 연결해주는 O2O 플랫폼.",
     tags: ["O2O", "React", "Development"],
-    pdf: "EATDA.pdf",
+    slides: { folder: "EATDA", pages: 24 },
   },
   {
     number: "03",
@@ -81,7 +81,7 @@ export const projects = [
     description:
       "Face Landmark를 기반으로 아이들의 스마트폰 사용으로 인한 시력 저하를 해결하기 위한 사용 습관 교정 솔루션.",
     tags: ["AI", "Face Landmark", "System"],
-    pdf: "eyekeeper.pdf",
+    slides: { folder: "eyekeeper", pages: 18 },
   },
   {
     number: "04",
@@ -90,7 +90,7 @@ export const projects = [
     description:
       "휠체어 장애인을 위해 저상버스와 지하철 데이터를 기반으로 이동 경로를 안내하는 서비스.",
     tags: ["Mobility", "Accessibility", "Development"],
-    pdf: "gilnuli.pdf",
+    slides: { folder: "gilnuli", pages: 27 },
   },
   {
     number: "05",
@@ -99,7 +99,7 @@ export const projects = [
     description:
       "시각 장애인 학생들의 대체자료 제작 지연 문제를 해결하기 위한 자동 파이프라인과 교열 특화 에이전트.",
     tags: ["AI Agent", "Pipeline", "Accessibility"],
-    pdf: "Braillight.pdf",
+    slides: { folder: "Braillight", pages: 47 },
   },
   {
     number: "06",
@@ -108,7 +108,7 @@ export const projects = [
     description:
       "중소기업의 외국인 노동자와의 의사소통 문제를 해결하기 위한 실시간 통역 안전모 부착형 클립 모듈.",
     tags: ["Hardware", "Translation", "Safety"],
-    pdf: "syncrew.pdf",
+    slides: { folder: "syncrew", pages: 24 },
   },
   {
     number: "07",
@@ -117,7 +117,7 @@ export const projects = [
     description:
       "Face Landmark를 기반으로 졸음운전을 감지하고 운전자에게 대응하는 졸음 감지 시스템.",
     tags: ["AI", "Computer Vision", "Safety"],
-    pdf: null as string | null,
+    slides: null as { folder: string; pages: number } | null,
   },
 ];
 

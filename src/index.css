@@ -395,12 +395,27 @@ button {
   display: grid;
   grid-template-columns: 0.9fr 1.1fr;
   gap: 80px;
-  align-items: center;
+  /* 사진 카드 높이를 오른쪽 글 영역 높이에 맞춤 */
+  align-items: stretch;
 }
 
 .profile-card {
+  display: flex;
+  flex-direction: column;
   border: 1px solid var(--border);
   background: var(--surface);
+}
+
+.profile-card .image-placeholder {
+  flex: 1;
+  aspect-ratio: auto;
+  min-height: 0;
+}
+
+.profile-card .image-placeholder img {
+  position: absolute;
+  inset: 0;
+  object-position: center 20%;
 }
 
 .image-placeholder {
@@ -1198,6 +1213,7 @@ button {
 }
 
 .pdf-canvas {
+  display: block;
   max-width: 100%;
   max-height: 100%;
   width: auto;
@@ -1574,6 +1590,10 @@ button {
   .about-grid {
     grid-template-columns: 1fr;
     gap: 50px;
+  }
+
+  .profile-card .image-placeholder {
+    aspect-ratio: 0.85;
   }
 
   .activity-grid {

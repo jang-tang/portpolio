@@ -47,7 +47,7 @@ function Projects() {
                 </span>
 
                 <span className="project-pdf-badge">
-                  {project.pdf ? (
+                  {project.slides ? (
                     <>
                       <FileText size={12} />
                       PPT 보기
